@@ -39,7 +39,6 @@ func (c *Client) RequestGenerator(reqCh chan string) {
 	}
 }
 
-type ClientName string
 type ClientDensity struct {
 	Wr          int
 	Wl          int
@@ -89,7 +88,7 @@ type Server struct {
 	Capacity      int   `json:"capacity"`
 	WaitQueue     []Req `json:"wait_queue"`
 	waitQueueLock sync.RWMutex
-	clients       map[ClientName]ClientDensity
+	clients       []ClientDensity
 	ClientSorter  *SortClient
 }
 
