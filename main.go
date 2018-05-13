@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 )
@@ -38,10 +39,58 @@ func (c *Client) RequestGenerator(reqCh chan string) {
 	}
 }
 
+type ClientName string
+type ClientDensity struct {
+	Wr          int
+	Wl          int
+	currDensity int
+}
+
+type lessFunc func(c1 *ClientDensity, c2 *ClientDensity) bool
+
+type SortClient struct {
+	cDensity []ClientDensity
+	less     []lessFunc
+}
+
+func (c *SortClient) Sort(cDen []ClientDensity) {
+	c.cDensity = cDen
+	sort.Sort(c)
+}
+
+func NewClientSorter(less ...lessFunc) *SortClient {
+	return &SortClient{
+		less: less,
+	}
+}
+func (c *SortClient) Len() int {
+	return len(c.cDensity)
+}
+
+func (c *SortClient) Swap(i, j int) {
+	c.cDensity[j], c.cDensity[i] = c.cDensity[i], c.cDensity[j]
+}
+func (c *SortClient) Less(i, j int) bool {
+	p, q := &c.cDensity[i], &c.cDensity[j]
+	for _, less := range c.less {
+		switch {
+		case less(p, q):
+			return true
+		case less(q, p):
+			return false
+		default:
+			continue
+		}
+	}
+	return false
+}
+
 type Server struct {
 	Capacity      int   `json:"capacity"`
 	WaitQueue     []Req `json:"wait_queue"`
 	waitQueueLock sync.RWMutex
+	clients       map[ClientName]ClientDensity
+	ClientSorter  *SortClient
 }
 
 func (s *Server) Enqueue(reqCh chan string) {
@@ -76,6 +125,10 @@ func (s *Server) FIFODequeue() {
 	fmt.Println(len(s.WaitQueue), counter)
 }
 
+func DensityDequeue() {
+
+}
+
 var g_clientList []*Client
 var g_server Server
 
@@ -87,6 +140,20 @@ func init() {
 		&Client{Name: "c", Speed: 40, Wr: 10, Wl: 70, Requests: []Req{}},
 	}
 	g_server = Server{Capacity: 100, WaitQueue: []Req{}}
+
+	g_server.ClientSorter = NewClientSorter(
+		func(c1 *ClientDensity, c2 *ClientDensity) bool {
+			rateRc1, rateRc2 := float32(c1.currDensity)/float32(c1.Wr), float32(c2.currDensity)/float32(c2.Wr)
+			if rateRc1 >= 1 && rateRc2 >= 1 {
+				return false
+			} else {
+				return rateRc1 < rateRc2
+			}
+		},
+		func(c1 *ClientDensity, c2 *ClientDensity) bool {
+			rateLc1, rateLc2 := float32(c1.currDensity)/float32(c1.Wl), float32(c2.currDensity)/float32(c2.Wl)
+			return rateLc1 < rateLc2
+		})
 }
 
 func main() {
