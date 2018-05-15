@@ -1,32 +1,31 @@
-package main
+package server
 
 import (
+	"dmclock/client"
 	"sort"
 	"sync"
 )
 
 type ClientName string
 
-type ClientDensity struct {
-	name        ClientName
-	Wr          int
-	Wl          int
+type Client struct {
+	*client.Client
 	currDensity int
 }
 
 type ClientDensityManager struct {
-	m    map[ClientName]*ClientDensity
-	l    []*ClientDensity
+	m    map[ClientName]*Client
+	l    []*Client
 	lock sync.RWMutex
 	less []lessFunc
 }
 
 func NewClientDensityManage() *ClientDensityManager {
 	return &ClientDensityManager{
-		m: make(map[ClientName]*ClientDensity),
-		l: []*ClientDensity{},
+		m: make(map[ClientName]*Client),
+		l: []*Client{},
 		less: []lessFunc{
-			func(c1 *ClientDensity, c2 *ClientDensity) bool {
+			func(c1 *Client, c2 *Client) bool {
 				rateRc1, rateRc2 := float32(c1.currDensity)/float32(c1.Wr), float32(c2.currDensity)/float32(c2.Wr)
 				if rateRc1 >= 1 && rateRc2 >= 1 {
 					return false
@@ -34,7 +33,7 @@ func NewClientDensityManage() *ClientDensityManager {
 					return rateRc1 < rateRc2
 				}
 			},
-			func(c1 *ClientDensity, c2 *ClientDensity) bool {
+			func(c1 *Client, c2 *Client) bool {
 				rateLc1, rateLc2 := float32(c1.currDensity)/float32(c1.Wl), float32(c2.currDensity)/float32(c2.Wl)
 				return rateLc1 < rateLc2
 			},
@@ -46,7 +45,7 @@ func (cdm *ClientDensityManager) UpdateClientDensity(name ClientName, wr, wl, nu
 	cdm.lock.Lock()
 	cd, ok := cdm.m[name]
 	if !ok {
-		clientDensity := &ClientDensity{name: name, Wr: wr, Wl: wl, currDensity: num}
+		clientDensity := &Client{Name: name, Wr: wr, Wl: wl, currDensity: num}
 		cdm.m[name] = clientDensity
 		cdm.l = append(cdm.l, clientDensity)
 	} else {
@@ -63,7 +62,7 @@ func (cdm *ClientDensityManager) ResetClientDensity() {
 	cdm.lock.Unlock()
 }
 
-type lessFunc func(c1 *ClientDensity, c2 *ClientDensity) bool
+type lessFunc func(c1 *Client, c2 *Client) bool
 
 func (c *ClientDensityManager) Sort() {
 	sort.Sort(c)
