@@ -1,9 +1,9 @@
 package main
 
 import (
-	"dmclock/client"
-	"dmclock/request"
-	"dmclock/server"
+	"github.com/elaron/dmclock/client"
+	"github.com/elaron/dmclock/request"
+	"github.com/elaron/dmclock/server"
 	"time"
 )
 

@@ -1,24 +1,35 @@
 package client
 
 import (
-	"dmclock/request"
 	"fmt"
+	"github.com/elaron/dmclock/request"
 	"time"
 )
 
 type Client struct {
-	Name     string        `json:"name"`
-	Speed    int           `json:"speed"`
-	Wr       int           `json:"reservation"`
-	Wl       int           `json:"limit"`
-	Requests []request.Req `json:"requests"`
+	name     string            `json:"name"`
+	speed    int               `json:"speed"`
+	wr       int               `json:"reservation"`
+	wl       int               `json:"limit"`
+	requests *request.Requests `json:"requests"`
+}
+
+func New(name string, speed, wr, wl int) *Client {
+	return &Client{
+		name:     name,
+		speed:    speed,
+		wr:       wr,
+		wl:       wl,
+		requests: request.New(),
+	}
 }
 
 func (c *Client) RequestGenerator(reqCh chan string) {
-	step := 1000 / c.Speed
+	step := 1000 / c.speed
 	fmt.Println(*c)
 	ticker := time.NewTicker(time.Duration(step) * time.Millisecond)
 	for range ticker.C {
-		reqCh <- c.Name
+		request.New()
+		reqCh <- c.name
 	}
 }

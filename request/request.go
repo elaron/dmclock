@@ -7,6 +7,20 @@ type Req struct {
 	ReqId      int
 }
 
+type Requests struct {
+	list []Req
+}
+
+func New() *Requests  {
+	return &Requests{
+		list: []Req{},
+	}
+}
+
+func (r *Requests)AddReq(clientName string) int {
+	r.list = append(r.list, re)
+}
+
 var g_reqId int
 var g_reqIdLock sync.RWMutex
 

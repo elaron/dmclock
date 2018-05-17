@@ -1,9 +1,10 @@
 package server
 
 import (
-	r "dmclock/request"
+	r "github.com/elaron/dmclock/request"
 	"fmt"
 	"sync"
+	"github.com/elaron/dmclock/client"
 )
 
 type Server struct {
@@ -19,6 +20,10 @@ func New(cap int) *Server {
 		WaitQueue: []r.Req{},
 		cdm:       NewClientDensityManage(),
 	}
+}
+
+func (s *Server)AddClient(name ClientName, client *client.Client)  {
+	s.cdm.
 }
 
 func (s *Server) Enqueue(reqCh chan string) {
