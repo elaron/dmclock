@@ -47,7 +47,7 @@ func NewClientDensityManage() *ClientDensityManager {
 			func(c1 *ClientDensity, c2 *ClientDensity) bool {
 				len1 := c1.RequestsNum()
 				len2 := c2.RequestsNum()
-				if len1 > 0 && len2 < 0 {
+				if len1 > 0 && len2 <= 0 {
 					return true
 				} else {
 					return false
@@ -162,6 +162,14 @@ type lessFunc func(c1 *ClientDensity, c2 *ClientDensity) bool
 
 func (c *ClientDensityManager) Sort() {
 	sort.Sort(c)
+	c.PrintClients()
+}
+
+func (cdm *ClientDensityManager) PrintClients() {
+	for i, client := range cdm.l {
+		log.Printf("idx=%d %s reqLen=%d rateR=%f rateL=%f currentDensity=%d\n",
+			i, client.Name(), client.RequestsNum(), client.ReservationRate(), client.LimitationRate(), client.currDensity)
+	}
 }
 
 func (c *ClientDensityManager) Len() int {
