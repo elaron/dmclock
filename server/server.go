@@ -1,14 +1,15 @@
 package server
 
 import (
-	r "github.com/elaron/dmclock/request"
 	"fmt"
-	"sync"
 	"github.com/elaron/dmclock/client"
+	r "github.com/elaron/dmclock/request"
+	"log"
+	"sync"
 )
 
 type Server struct {
-	Capacity      int     `json:"capacity"`
+	capacity      int     `json:"capacity"`
 	WaitQueue     []r.Req `json:"wait_queue"`
 	waitQueueLock sync.RWMutex
 	cdm           *ClientDensityManager
@@ -16,30 +17,19 @@ type Server struct {
 
 func New(cap int) *Server {
 	return &Server{
-		Capacity:  cap,
+		capacity:  cap,
 		WaitQueue: []r.Req{},
 		cdm:       NewClientDensityManage(),
 	}
 }
 
-func (s *Server)AddClient(name ClientName, client *client.Client)  {
-	s.cdm.
-}
-
-func (s *Server) Enqueue(reqCh chan string) {
-	for {
-		select {
-		case client := <-reqCh:
-			//s.waitQueueLock.Lock()
-			s.WaitQueue = append(s.WaitQueue, r.Req{client, r.NewId()})
-			//s.waitQueueLock.Unlock()
-		}
-	}
+func (s *Server) AddClient(name ClientName, client *client.Client) {
+	s.cdm.AddClient(name, client)
 }
 
 func (s *Server) FIFODequeue() {
 	counter := make(map[string]int)
-	max := s.Capacity
+	max := s.capacity
 	//s.waitQueueLock.RLock()
 	for _, v := range s.WaitQueue {
 		if max <= 0 {
@@ -58,6 +48,15 @@ func (s *Server) FIFODequeue() {
 	fmt.Println(len(s.WaitQueue), counter)
 }
 
-func DensityDequeue() {
-
+func (s *Server) DensityDequeue() {
+	counter := make(map[string]int)
+	for i := 0; i < s.capacity; i++ {
+		req := s.cdm.scheduleClient()
+		if nil == req {
+			continue
+		}
+		counter[req.ClientName] += 1
+		log.Println(req.ClientName, req.ReqId)
+	}
+	fmt.Println(counter)
 }
